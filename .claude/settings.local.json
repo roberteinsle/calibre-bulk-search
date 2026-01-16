@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(python -m venv:*)",
+      "Bash(venv\\Scripts\\pip install:*)",
+      "Bash(\"venv/Scripts/pip\" install -r requirements.txt)",
+      "Bash(\"venv/Scripts/pip\" install --upgrade pip)",
+      "Bash(\"venv/Scripts/python.exe\" -m pip install --upgrade pip)",
+      "Bash(\"venv/Scripts/python.exe\" -m pip install -r requirements.txt)",
+      "Bash(\"venv/Scripts/python.exe\" -m uvicorn:*)",
+      "Bash(python -c:*)",
+      "Bash(curl:*)",
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)",
+      "Bash(python main.py:*)",
+      "Bash(timeout:*)"
+    ]
+  }
+}
