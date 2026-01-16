@@ -15,7 +15,13 @@
       "Bash(git config:*)",
       "Bash(git add:*)",
       "Bash(python main.py:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Calibre Bulk Search app with OneDrive-compatible config files\n\n- Renamed .env to config.env for OneDrive compatibility\n- Updated all documentation \\(CLAUDE.md, README.md\\)\n- FastAPI backend with async search functionality\n- Multi-strategy search with SceneNZBs integration\n- Bootstrap 5 frontend\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ]
   }
 }
