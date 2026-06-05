@@ -14,7 +14,7 @@ from config import settings
 app = FastAPI(
     title="Calibre Bulk Search",
     description="Web app for bulk searching books in Calibre library",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 # CORS middleware for local development
@@ -37,6 +37,15 @@ class SearchRequest(BaseModel):
     text: str
 
 
+class SearchAttempt(BaseModel):
+    strategy: str
+    status: int | None = None
+    total_num: int = 0
+    book_count: int = 0
+    error: str | None = None
+    elapsed_ms: int = 0
+
+
 class SearchResult(BaseModel):
     query: str
     found: bool
@@ -46,6 +55,7 @@ class SearchResult(BaseModel):
     all_book_ids: List[int] = []
     error: str | None = None
     scenenzbs_url: str | None = None
+    log: List[SearchAttempt] = []
 
 
 class BulkSearchResponse(BaseModel):
@@ -53,6 +63,7 @@ class BulkSearchResponse(BaseModel):
     total_queries: int
     found_count: int
     not_found_count: int
+    calibre_server: str
 
 
 @app.get("/")
@@ -111,7 +122,8 @@ async def bulk_search(request: SearchRequest):
             total_num=result.get("total_num", 0),
             all_book_ids=result.get("all_book_ids", []),
             error=result.get("error"),
-            scenenzbs_url=result.get("scenenzbs_url")
+            scenenzbs_url=result.get("scenenzbs_url"),
+            log=result.get("log", [])
         )
         results.append(search_result)
 
@@ -124,7 +136,8 @@ async def bulk_search(request: SearchRequest):
         results=results,
         total_queries=len(queries),
         found_count=found_count,
-        not_found_count=not_found_count
+        not_found_count=not_found_count,
+        calibre_server=settings.calibre_server_url
     )
 
 

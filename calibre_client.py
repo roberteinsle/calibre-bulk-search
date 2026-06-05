@@ -1,6 +1,7 @@
 import httpx
 import re
 import asyncio
+import time
 from typing import Optional, List, Dict, Any
 from urllib.parse import urljoin, quote
 from config import settings
@@ -184,46 +185,77 @@ class CalibreClient:
                         "error": str(result),
                         "book_ids": [],
                         "total_num": 0,
-                        "scenenzbs_url": scenenzbs_url
+                        "scenenzbs_url": scenenzbs_url,
+                        "log": []
                     })
-                elif result and result.get("book_ids"):
-                    first_book_id = result["book_ids"][0]
+                    continue
+
+                attempts = result.get("attempts", [])
+                data = result.get("data")
+
+                # Surface the last error from any attempt (e.g. auth/connection issues)
+                error_msg = ""
+                for attempt in attempts:
+                    if attempt.get("error"):
+                        error_msg = attempt["error"]
+
+                if data and data.get("book_ids"):
+                    first_book_id = data["book_ids"][0]
                     results.append({
                         "query": query,
                         "found": True,
                         "book_id": first_book_id,
                         "book_url": self.get_book_url(first_book_id),
-                        "total_num": result.get("total_num", 0),
-                        "all_book_ids": result.get("book_ids", []),
-                        "scenenzbs_url": scenenzbs_url
+                        "total_num": data.get("total_num", 0),
+                        "all_book_ids": data.get("book_ids", []),
+                        "scenenzbs_url": scenenzbs_url,
+                        "log": attempts
                     })
                 else:
                     results.append({
                         "query": query,
                         "found": False,
+                        "error": error_msg,
                         "book_ids": [],
                         "total_num": 0,
-                        "scenenzbs_url": scenenzbs_url
+                        "scenenzbs_url": scenenzbs_url,
+                        "log": attempts
                     })
 
         return results
 
-    async def _smart_search(self, client: httpx.AsyncClient, query: str) -> Optional[Dict[str, Any]]:
+    async def _smart_search(self, client: httpx.AsyncClient, query: str) -> Dict[str, Any]:
         """
         Smart search with multiple strategies.
-        Tries different search patterns until a result is found.
+
+        Tries different search patterns until a result is found and records a
+        per-strategy log for the search protocol view.
+
+        Returns:
+            Dict with keys:
+              - "data": the matching Calibre response (or None if nothing found)
+              - "attempts": list of per-strategy log entries
         """
         # Generate search strategies
         strategies = self._generate_search_strategies(query)
 
+        attempts: List[Dict[str, Any]] = []
+        matched: Optional[Dict[str, Any]] = None
+
         # Try each strategy until we find results
         for strategy in strategies:
-            result = await self._search_with_query(client, strategy)
-            if result and result.get("book_ids"):
-                return result
+            attempt, data = await self._search_with_query(client, strategy)
+            attempts.append(attempt)
 
-        # No results found with any strategy
-        return None
+            if data is not None and data.get("book_ids"):
+                matched = data
+                break
+
+            # Auth/connection/server errors won't be fixed by another strategy
+            if attempt.get("error"):
+                break
+
+        return {"data": matched, "attempts": attempts}
 
     def _generate_search_strategies(self, query: str) -> List[str]:
         """
@@ -290,9 +322,13 @@ class CalibreClient:
 
         return strategies
 
-    async def _search_with_query(self, client: httpx.AsyncClient, query: str) -> Optional[Dict[str, Any]]:
+    async def _search_with_query(self, client: httpx.AsyncClient, query: str):
         """
-        Internal method to search with a given httpx client.
+        Execute a single search with a shared httpx client.
+
+        Never raises — returns a tuple ``(attempt, data)`` where ``attempt`` is a
+        log entry (strategy, HTTP status, hit counts, elapsed time, error) and
+        ``data`` is the parsed Calibre response (or None on error).
         """
         search_url = f"{self.base_url}/ajax/search/{self.library_id}"
         params = {
@@ -303,9 +339,32 @@ class CalibreClient:
             "sort_order": "asc"
         }
 
+        attempt: Dict[str, Any] = {
+            "strategy": query,
+            "status": None,
+            "total_num": 0,
+            "book_count": 0,
+            "error": None,
+            "elapsed_ms": 0,
+        }
+        start = time.perf_counter()
+
         try:
             response = await client.get(search_url, params=params)
+            attempt["elapsed_ms"] = int((time.perf_counter() - start) * 1000)
+            attempt["status"] = response.status_code
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            attempt["total_num"] = data.get("total_num", 0)
+            attempt["book_count"] = len(data.get("book_ids", []))
+            return attempt, data
+        except httpx.HTTPStatusError as e:
+            attempt["elapsed_ms"] = int((time.perf_counter() - start) * 1000)
+            attempt["status"] = e.response.status_code
+            reason = (e.response.reason_phrase or "").strip()
+            attempt["error"] = f"HTTP {e.response.status_code} {reason}".strip()
+            return attempt, None
         except Exception as e:
-            raise e
+            attempt["elapsed_ms"] = int((time.perf_counter() - start) * 1000)
+            attempt["error"] = f"{type(e).__name__}: {e}"
+            return attempt, None

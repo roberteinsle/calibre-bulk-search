@@ -31,7 +31,10 @@
       "Bash(python -m uvicorn main:app --host 0.0.0.0 --port 8000)",
       "Bash(cat .gitignore)",
       "Bash(git check-ignore *)",
-      "Bash(ls Dockerfile docker-compose.yml .dockerignore)"
+      "Bash(ls Dockerfile docker-compose.yml .dockerignore)",
+      "Bash(git commit -m 'Add Calibre server authentication and Docker/Portainer deployment *)",
+      "Bash(git commit -m 'Make host port configurable via HOST_PORT \\(default 8085\\) *)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; Write-Output \\(\"Port frei: \" + \\($null -eq \\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\)\\)\\))"
     ]
   }
 }

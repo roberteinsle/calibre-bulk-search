@@ -7,6 +7,7 @@ const clearBtn = document.getElementById('clearBtn');
 const resultsSection = document.getElementById('resultsSection');
 const resultsContainer = document.getElementById('resultsContainer');
 const statsText = document.getElementById('statsText');
+const serverInfo = document.getElementById('serverInfo');
 
 // Handle form submission
 searchForm.addEventListener('submit', async (e) => {
@@ -76,6 +77,11 @@ function displayResults(data) {
     // Update statistics
     statsText.textContent = `${data.total_queries} Bücher gesucht: ${data.found_count} gefunden, ${data.not_found_count} nicht gefunden`;
 
+    // Show which Calibre server was queried (helps diagnose deployment issues)
+    if (serverInfo) {
+        serverInfo.textContent = `Calibre-Server: ${data.calibre_server || '–'}`;
+    }
+
     // Display each result
     data.results.forEach(result => {
         const resultItem = createResultItem(result);
@@ -138,8 +144,52 @@ function createResultItem(result) {
         `;
     }
 
+    // Search protocol: collapsible per-strategy log
+    if (result.log && result.log.length > 0) {
+        contentHTML += createSearchLog(result.log);
+    }
+
     div.innerHTML = contentHTML;
     return div;
+}
+
+// Build a collapsible search protocol table for a single result
+function createSearchLog(log) {
+    const rows = log.map(attempt => {
+        const status = attempt.error
+            ? `<span class="text-danger">${escapeHtml(attempt.error)}</span>`
+            : `<span class="text-success">${attempt.status ?? '–'}</span>`;
+        const hits = attempt.error
+            ? '–'
+            : `${attempt.book_count}/${attempt.total_num}`;
+        return `
+            <tr>
+                <td class="text-break"><code>${escapeHtml(attempt.strategy)}</code></td>
+                <td>${status}</td>
+                <td class="text-end">${hits}</td>
+                <td class="text-end text-muted">${attempt.elapsed_ms} ms</td>
+            </tr>
+        `;
+    }).join('');
+
+    return `
+        <details class="search-log mt-2">
+            <summary class="text-muted small">🔎 Suchprotokoll (${log.length} ${log.length === 1 ? 'Strategie' : 'Strategien'})</summary>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered small mb-0">
+                    <thead>
+                        <tr>
+                            <th>Strategie</th>
+                            <th>Status</th>
+                            <th class="text-end">Treffer</th>
+                            <th class="text-end">Dauer</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        </details>
+    `;
 }
 
 // Escape HTML to prevent XSS

@@ -58,15 +58,15 @@ Access the application at: `http://localhost:8000`
 1. **main.py**: FastAPI application with endpoints
    - `GET /`: Serves the main HTML page
    - `GET /health`: Health check endpoint (returns Calibre server URL)
-   - `POST /api/search`: Bulk search endpoint (request: `{text: string}`, response: `BulkSearchResponse`)
+   - `POST /api/search`: Bulk search endpoint (request: `{text: string}`, response: `BulkSearchResponse`). The response includes `calibre_server` and a per-result `log` (list of `SearchAttempt`) powering the frontend search protocol view
    - `GET /api/book/{book_id}`: Get book details from Calibre
    - `GET /api/test-scenenzbs?query={query}`: Test SceneNZBs URL generation
 
 2. **calibre_client.py**: Async HTTP client for Calibre Content Server
    - `bulk_search()`: Parallel search for multiple books using `asyncio.gather()` — the live search path
-   - `_smart_search()`: Multi-strategy search with fallback patterns (called per-query by `bulk_search`)
+   - `_smart_search()`: Multi-strategy search with fallback patterns (called per-query by `bulk_search`). Returns `{"data": <match or None>, "attempts": [...]}`, where `attempts` is the per-strategy log surfaced in the search protocol view
    - `_generate_search_strategies()`: Creates multiple search patterns from a query
-   - `_search_with_query()`: Internal method to execute a search with a shared client
+   - `_search_with_query()`: Execute a single search with a shared client. Never raises — returns `(attempt, data)` where `attempt` is a log entry (strategy, HTTP status, hit counts, elapsed_ms, error) and `data` is the parsed response or None
    - `search_book()`: Standalone single-book search — NOT used by `bulk_search` (legacy/utility; spins up its own client)
    - `get_book_details()`: Fetch detailed book information (backs `/api/book/{id}`, independent of search)
    - `get_book_url()`: Generate Calibre-Web URLs (format: `{base}/#book_id={id}&library_id={lib}&panel=book_details`)

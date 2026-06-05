@@ -130,3 +130,12 @@ footer {
     padding-top: 2rem;
     border-top: 1px solid #dee2e6;
 }
+
+.search-log summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+.search-log summary:hover {
+    color: #0d6efd !important;
+}
