@@ -63,13 +63,13 @@ Access the application at: `http://localhost:8000`
    - `GET /api/test-scenenzbs?query={query}`: Test SceneNZBs URL generation
 
 2. **calibre_client.py**: Async HTTP client for Calibre Content Server
-   - `search_book()`: Single book search via AJAX endpoint
-   - `bulk_search()`: Parallel search for multiple books using `asyncio.gather()`
-   - `_smart_search()`: Multi-strategy search with fallback patterns
+   - `bulk_search()`: Parallel search for multiple books using `asyncio.gather()` — the live search path
+   - `_smart_search()`: Multi-strategy search with fallback patterns (called per-query by `bulk_search`)
    - `_generate_search_strategies()`: Creates multiple search patterns from a query
-   - `_search_with_query()`: Internal method to execute a search with shared client
-   - `get_book_details()`: Fetch detailed book information
-   - `get_book_url()`: Generate Calibre-Web URLs with book_id and library_id
+   - `_search_with_query()`: Internal method to execute a search with a shared client
+   - `search_book()`: Standalone single-book search — NOT used by `bulk_search` (legacy/utility; spins up its own client)
+   - `get_book_details()`: Fetch detailed book information (backs `/api/book/{id}`, independent of search)
+   - `get_book_url()`: Generate Calibre-Web URLs (format: `{base}/#book_id={id}&library_id={lib}&panel=book_details`)
    - `get_scenenzbs_url()`: Generate SceneNZBs search URLs with author/title parsing
 
 3. **text_parser.py**: Text parsing utilities
@@ -157,12 +157,13 @@ All Calibre API calls use async/await for parallel processing:
 - Each search failure doesn't interrupt other parallel searches
 
 ### Input Parsing
-`BookTitleParser` supports multiple input formats:
-- Simple title: "Drohnenland"
-- Author - Title: "Frank Schätzing - Der Schwarm" (supports `-`, `–`, `—`)
-- Title by Author: "Es von Stephen King" / "It by Stephen King"
-- Author: Title: "Carlo Masala: Weltunordnung"
-- Cleans list markers (bullets, numbers, dashes at start)
+`BookTitleParser._clean_line()` supports multiple input formats:
+- Simple title: "Drohnenland" → unchanged
+- `Author - Title`: "Frank Schätzing - Der Schwarm" → **reordered** to "Der Schwarm Frank Schätzing" (only ` - ` with spaces; en/em-dashes are not split here)
+- `Title by/von/from Author`: "Es von Stephen King" / "It by Stephen King" → kept as-is (whole line is the query)
+- Cleans list markers (bullets, numbers, dashes at start) and collapses whitespace
+
+Note: the parser and `CalibreClient` parse separators independently. `_clean_line` reorders `Author - Title`, while `get_scenenzbs_url()` and `_generate_search_strategies()` split `:`, en-dash, and em-dash too. Keep these in sync when changing separator handling.
 
 ### SceneNZBs Integration
 For books not found in Calibre, the app generates SceneNZBs search URLs:
@@ -173,7 +174,7 @@ For books not found in Calibre, the app generates SceneNZBs search URLs:
 
 ## Configuration
 
-Required environment variables in `config.env`:
+Required environment variables in `config.env` (loaded by `config.py` via pydantic-settings; keys are case-insensitive). Defaults are also hardcoded in `Settings`, so the app runs even without `config.env`:
 
 ```env
 CALIBRE_SERVER_URL=http://192.168.10.59:8722
@@ -181,6 +182,8 @@ CALIBRE_LIBRARY_ID=Calibre-Bibliothek
 APP_HOST=0.0.0.0
 APP_PORT=8000
 ```
+
+Note: `CALIBRE_SERVER_URL` is concatenated directly (e.g. `{base}/ajax/search/...`), so a trailing slash yields a double slash in the path. Calibre tolerates it, but prefer no trailing slash.
 
 ## Development Notes
 
@@ -209,4 +212,4 @@ The project uses `httpx` instead of `requests` for HTTP calls because:
 - All searches are performed in parallel for performance
 - Results include direct links to Calibre-Web interface
 - Private repository - credentials must not be committed
-- The Calibre server URL format is: `http://{host}:{port}/#book_id={id}&library_id={library}`
+- Calibre-Web deep-link format (from `get_book_url`): `{CALIBRE_SERVER_URL}/#book_id={id}&library_id={library}&panel=book_details`

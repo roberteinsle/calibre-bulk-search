@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     calibre_server_url: str = "http://192.168.10.59:8722"
     calibre_library_id: str = "Calibre-Bibliothek"
+    calibre_username: str = ""
+    calibre_password: str = ""
+    calibre_auth_mode: str = "basic"  # "basic" or "digest"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
 

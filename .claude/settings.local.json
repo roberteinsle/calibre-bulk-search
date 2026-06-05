@@ -21,7 +21,17 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Write-Output \"Killing PID $\\($_.OwningProcess\\)\"; Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 1; Write-Output \"Port 8000 frei: $\\(\\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\) -eq $null\\)\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Write-Output \"Killing PID $\\($_.OwningProcess\\)\"; Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; $c = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; if \\($null -eq $c\\) { Write-Output \"Port 8000 ist frei\" } else { Write-Output \"Noch belegt von PID $\\($c.OwningProcess\\)\" })",
+      "PowerShell(Stop-Process -Id 25584 -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; $c = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; if \\($null -eq $c\\) { Write-Output \"Port 8000 ist frei\" } else { Write-Output \"Noch belegt von PID $\\($c.OwningProcess\\)\"; Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 1; Write-Output \"Jetzt frei: $\\(\\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\) -eq $null\\)\" })",
+      "PowerShell(Start-Sleep -Seconds 3; $c = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; if \\($null -eq $c\\) { Write-Output \"Port 8000 ist frei - bereit zum Start\" } else { Write-Output \"Noch belegt von PID $\\($c.OwningProcess\\)\"; try { Get-Process -Id $c.OwningProcess -ErrorAction Stop | Select-Object Id,ProcessName } catch { Write-Output \"PID $\\($c.OwningProcess\\) existiert nicht mehr \\(stale\\)\" } })",
+      "PowerShell($conns = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; foreach \\($c in $conns\\) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Output \"LISTEN 8000 -> PID $\\($c.OwningProcess\\) Name=$\\($p.ProcessName\\) Start=$\\($p.StartTime\\)\" }; Write-Output \"--- Alle python-Prozesse:\"; Get-Process python -ErrorAction SilentlyContinue | Select-Object Id,StartTime | Format-Table -AutoSize | Out-String)",
+      "PowerShell(foreach \\($id in 4144,18972,25344,20572,20764\\) { try { Stop-Process -Id $id -Force -ErrorAction Stop; Write-Output \"Beendet PID $id\" } catch { Write-Output \"PID $id schon weg\" } }; Start-Sleep -Seconds 3; $c = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; Write-Output \\(\"Port 8000 frei: \" + \\($null -eq $c\\)\\))",
+      "Bash(python -m uvicorn main:app --host 0.0.0.0 --port 8000)",
+      "Bash(cat .gitignore)",
+      "Bash(git check-ignore *)",
+      "Bash(ls Dockerfile docker-compose.yml .dockerignore)"
     ]
   }
 }

@@ -12,6 +12,17 @@ class CalibreClient:
         self.library_id = settings.calibre_library_id
         self.timeout = 10.0
 
+    def _get_auth(self) -> Optional[httpx.Auth]:
+        """
+        Build the httpx auth object for the Calibre server, or None if no
+        credentials are configured.
+        """
+        if not settings.calibre_username:
+            return None
+        if settings.calibre_auth_mode.lower() == "digest":
+            return httpx.DigestAuth(settings.calibre_username, settings.calibre_password)
+        return httpx.BasicAuth(settings.calibre_username, settings.calibre_password)
+
     async def search_book(self, query: str) -> Optional[Dict[str, Any]]:
         """
         Search for a book in Calibre using the AJAX search endpoint.
@@ -36,7 +47,7 @@ class CalibreClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, auth=self._get_auth()) as client:
                 response = await client.get(search_url, params=params)
                 response.raise_for_status()
                 return response.json()
@@ -60,7 +71,7 @@ class CalibreClient:
         details_url = f"{self.base_url}/ajax/book/{book_id}/{self.library_id}"
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, auth=self._get_auth()) as client:
                 response = await client.get(details_url)
                 response.raise_for_status()
                 return response.json()
@@ -154,7 +165,7 @@ class CalibreClient:
         """
         results = []
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.timeout, auth=self._get_auth()) as client:
             tasks = []
             for query in queries:
                 if query and query.strip():

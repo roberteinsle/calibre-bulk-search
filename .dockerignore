@@ -1,0 +1,26 @@
+# Secrets / local config — provided via environment variables instead
+config.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Git / IDE / OS
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
