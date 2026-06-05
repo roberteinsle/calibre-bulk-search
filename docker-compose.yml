@@ -14,3 +14,13 @@ services:
       APP_HOST: 0.0.0.0
       APP_PORT: "8000"
     restart: unless-stopped
+    networks:
+      - calibre-net
+
+# Join the existing Docker network of the Calibre container so this app can
+# reach it by container name on its internal port (e.g. http://calibre:8081),
+# bypassing host firewall/NAT. Set CALIBRE_NETWORK to that network's name.
+networks:
+  calibre-net:
+    external: true
+    name: ${CALIBRE_NETWORK:-bridge}
