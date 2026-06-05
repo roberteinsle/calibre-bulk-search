@@ -1,7 +1,6 @@
 services:
   calibre-bulk-search:
     build: .
-    image: calibre-bulk-search:latest
     container_name: calibre-bulk-search
     ports:
       - "${HOST_PORT:-8085}:8000"
@@ -14,13 +13,19 @@ services:
       APP_HOST: 0.0.0.0
       APP_PORT: "8000"
     restart: unless-stopped
-    networks:
-      - calibre-net
 
-# Join the existing Docker network of the Calibre container so this app can
-# reach it by container name on its internal port (e.g. http://calibre:8081),
-# bypassing host firewall/NAT. Set CALIBRE_NETWORK to that network's name.
-networks:
-  calibre-net:
-    external: true
-    name: ${CALIBRE_NETWORK:-bridge}
+# --- Optional: Calibre runs on the SAME Docker host ---
+# Reaching Calibre via its LAN IP can time out when both containers share a host
+# (container-to-host firewall/NAT). In that case, address Calibre by container
+# name on its internal port and join its network. To enable:
+#   1. Set CALIBRE_SERVER_URL=http://<calibre-container-name>:8081
+#   2. Set CALIBRE_NETWORK=<calibre-container-network-name>
+#   3. Uncomment the service-level "networks:" entry and the top-level block below.
+#
+#    networks:
+#      - calibre-net
+#
+# networks:
+#   calibre-net:
+#     external: true
+#     name: ${CALIBRE_NETWORK}
