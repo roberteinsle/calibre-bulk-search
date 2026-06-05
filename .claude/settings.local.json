@@ -34,7 +34,9 @@
       "Bash(ls Dockerfile docker-compose.yml .dockerignore)",
       "Bash(git commit -m 'Add Calibre server authentication and Docker/Portainer deployment *)",
       "Bash(git commit -m 'Make host port configurable via HOST_PORT \\(default 8085\\) *)",
-      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; Write-Output \\(\"Port frei: \" + \\($null -eq \\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\)\\)\\))"
+      "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; Write-Output \\(\"Port frei: \" + \\($null -eq \\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\)\\)\\))",
+      "Bash(git commit -m 'Add search protocol view and bump version to v1.0.1 *)",
+      "Bash(git commit -m 'Add cache-busting version query to static assets *)"
     ]
   }
 }
