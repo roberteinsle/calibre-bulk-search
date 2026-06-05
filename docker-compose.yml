@@ -4,7 +4,7 @@ services:
     image: calibre-bulk-search:latest
     container_name: calibre-bulk-search
     ports:
-      - "8000:8000"
+      - "${HOST_PORT:-8085}:8000"
     environment:
       CALIBRE_SERVER_URL: ${CALIBRE_SERVER_URL:-http://192.168.10.50:8722}
       CALIBRE_LIBRARY_ID: ${CALIBRE_LIBRARY_ID:-Calibre-Bibliothek}
