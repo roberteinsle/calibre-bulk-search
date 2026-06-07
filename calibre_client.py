@@ -3,7 +3,7 @@ import re
 import asyncio
 import time
 from typing import Optional, List, Dict, Any
-from urllib.parse import urljoin, quote
+from urllib.parse import urljoin, quote, quote_plus
 from config import settings
 
 
@@ -103,7 +103,9 @@ class CalibreClient:
             query: Original search query
 
         Returns:
-            SceneNZBs search URL with author and title
+            SceneNZBs search URL using the books category (cat=7120) and a
+            single combined "Author: Title" query, e.g.:
+            https://scenenzbs.com/search?cat=7120&q=Liz+Moore%3A+Der+Gott+des+Waldes
         """
         author = ""
         title = ""
@@ -143,16 +145,16 @@ class CalibreClient:
         title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)
         author = re.sub(r'\s*\(\d{4}\)\s*$', '', author)
 
-        # URL encode for SceneNZBs
-        author_encoded = quote(author) if author else ""
-        title_encoded = quote(title) if title else ""
-
-        if author_encoded and title_encoded:
-            return f"https://scenenzbs.com/books?author={author_encoded}&title={title_encoded}"
-        elif title_encoded:
-            return f"https://scenenzbs.com/books?title={title_encoded}"
+        # Build a single combined "Author: Title" search term
+        if author and title:
+            search_term = f"{author}: {title}"
+        elif title:
+            search_term = title
         else:
-            return f"https://scenenzbs.com/books?q={quote(query)}"
+            search_term = query.strip()
+
+        # quote_plus encodes spaces as "+" and ":" as "%3A"
+        return f"https://scenenzbs.com/search?cat=7120&q={quote_plus(search_term)}"
 
     async def bulk_search(self, queries: List[str]) -> List[Dict[str, Any]]:
         """
