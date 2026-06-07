@@ -36,7 +36,10 @@
       "Bash(git commit -m 'Make host port configurable via HOST_PORT \\(default 8085\\) *)",
       "PowerShell(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Start-Sleep -Seconds 2; Write-Output \\(\"Port frei: \" + \\($null -eq \\(Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue\\)\\)\\))",
       "Bash(git commit -m 'Add search protocol view and bump version to v1.0.1 *)",
-      "Bash(git commit -m 'Add cache-busting version query to static assets *)"
+      "Bash(git commit -m 'Add cache-busting version query to static assets *)",
+      "Bash(python3 -c ' *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }

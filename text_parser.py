@@ -41,13 +41,18 @@ class BookTitleParser:
     @staticmethod
     def _clean_line(line: str) -> str:
         """
-        Clean a single line and extract the book title/search query.
+        Clean a single line into a search query.
 
-        Handles various formats:
-        - "Author - Title" -> "Title"
-        - "Title by Author" -> "Title Author"
-        - "Title von Author" -> "Title Author"
-        - Removes extra whitespace, bullets, numbers
+        The author/title structure is intentionally preserved so that the
+        smart search (CalibreClient._generate_search_strategies) can derive
+        multiple search strategies from it. All of these formats are handled
+        consistently downstream:
+        - "Title"
+        - "Author - Title"   (also en-dash "–" / em-dash "—")
+        - "Author: Title"
+        - "Title by Author" / "Title von Author"
+
+        This method only strips list markers and normalizes whitespace.
         """
         if not line or not line.strip():
             return ""
@@ -58,24 +63,6 @@ class BookTitleParser:
         # Remove extra whitespace
         line = ' '.join(line.split())
 
-        if not line:
-            return ""
-
-        # Try to detect "Author - Title" format
-        if ' - ' in line:
-            parts = line.split(' - ', 1)
-            if len(parts) == 2:
-                # Return "Title Author" for better search results
-                return f"{parts[1].strip()} {parts[0].strip()}"
-
-        # Try to detect "Title by Author" or "Title von Author"
-        by_patterns = [r'\s+by\s+', r'\s+von\s+', r'\s+from\s+']
-        for pattern in by_patterns:
-            if re.search(pattern, line, re.IGNORECASE):
-                # Keep the whole string as search query
-                return line.strip()
-
-        # Default: return cleaned line as-is
         return line.strip()
 
     @staticmethod

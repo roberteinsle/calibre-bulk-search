@@ -14,7 +14,7 @@ from config import settings
 app = FastAPI(
     title="Calibre Bulk Search",
     description="Web app for bulk searching books in Calibre library",
-    version="1.0.1"
+    version="1.0.2"
 )
 
 # CORS middleware for local development
